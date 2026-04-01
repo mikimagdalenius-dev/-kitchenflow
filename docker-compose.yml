@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: demonlist-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: demonlist
+      POSTGRES_USER: demonlist
+      POSTGRES_PASSWORD: demonlist
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    container_name: demonlist-web
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://demonlist:demonlist@db:5432/demonlist?schema=public
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:

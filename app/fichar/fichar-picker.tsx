@@ -1,0 +1,89 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { formatUserName } from "@/lib/ui";
+
+type UserOption = {
+  id: number;
+  fullName: string;
+};
+
+export function FicharPicker({
+  users,
+  autoFocus = false,
+  inputClassName = "acceso-input"
+}: {
+  users: UserOption[];
+  autoFocus?: boolean;
+  inputClassName?: string;
+}) {
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<UserOption | null>(null);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return users.slice(0, 12);
+    return users.filter((u) => u.fullName.toLowerCase().includes(q)).slice(0, 12);
+  }, [users, query]);
+
+  const onChangeQuery = (value: string) => {
+    setQuery(value);
+    const exact = users.find((u) => u.fullName.toLowerCase() === value.trim().toLowerCase()) ?? null;
+    setSelected(exact);
+  };
+
+  return (
+    <div className="space-y-2 text-left">
+      <label className="text-sm text-slate-600">
+        Nombre
+        <input
+          className={`pc-select mt-1 ${inputClassName}`.trim()}
+          placeholder="Escribe tu nombre..."
+          list="fichar-usuarios-lista"
+          value={query}
+          onChange={(e) => onChangeQuery(e.target.value)}
+          autoFocus={autoFocus}
+        />
+      </label>
+
+      <datalist id="fichar-usuarios-lista">
+        {users.map((user) => (
+          <option key={user.id} value={user.fullName} />
+        ))}
+      </datalist>
+
+      <input
+        type="text"
+        name="userId"
+        value={selected?.id ?? ""}
+        readOnly
+        required
+        tabIndex={-1}
+        aria-hidden="true"
+        className="absolute h-0 w-0 opacity-0 pointer-events-none"
+      />
+
+      {!selected && query.trim().length > 0 && filtered.length > 0 && (
+        <div className="acceso-suggestions">
+          {filtered.map((user) => (
+            <button
+              key={user.id}
+              type="button"
+              className="acceso-suggestion"
+              onClick={() => {
+                setQuery(user.fullName);
+                setSelected(user);
+              }}
+            >
+              {formatUserName(user.fullName)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {query.trim().length > 0 && !selected && (
+        <p className="text-xs text-amber-700">Selecciona un nombre válido de la lista.</p>
+      )}
+    </div>
+  );
+}

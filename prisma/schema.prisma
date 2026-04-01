@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  EMPLOYEE
+  COOK
+  ADMIN
+  HR
+  KIOSK
+}
+
+model User {
+  id           Int               @id @default(autoincrement())
+  fullName     String
+  email        String?           @unique
+  role         Role              @default(EMPLOYEE)
+  active       Boolean           @default(true)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  intolerances UserIntolerance[]
+  attendances  AttendanceLog[]
+}
+
+model Allergen {
+  id           Int               @id @default(autoincrement())
+  code         String            @unique
+  name         String
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  dishes       DishAllergen[]
+  intolerances UserIntolerance[]
+}
+
+model Dish {
+  id          Int            @id @default(autoincrement())
+  name        String
+  description String?
+  dishType    String         @default("other")
+  createdById Int?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  menuItems   MenuItem[]
+  allergens   DishAllergen[]
+}
+
+model DishAllergen {
+  dishId     Int
+  allergenId Int
+  dish       Dish     @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  allergen   Allergen @relation(fields: [allergenId], references: [id], onDelete: Cascade)
+
+  @@id([dishId, allergenId])
+}
+
+model UserIntolerance {
+  userId      Int
+  allergenId  Int
+  severity    String?
+  notes       String?
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  allergen    Allergen @relation(fields: [allergenId], references: [id], onDelete: Cascade)
+
+  @@id([userId, allergenId])
+}
+
+model MenuWeek {
+  id         Int        @id @default(autoincrement())
+  weekStart  DateTime   @unique
+  notes      String?
+  status     String     @default("borrador")
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  menuItems  MenuItem[]
+}
+
+model MenuItem {
+  id          Int      @id @default(autoincrement())
+  menuWeekId  Int
+  dishId      Int
+  weekday     Int
+  category    String
+  optionIndex Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  menuWeek    MenuWeek @relation(fields: [menuWeekId], references: [id], onDelete: Cascade)
+  dish        Dish     @relation(fields: [dishId], references: [id], onDelete: Restrict)
+
+  @@unique([menuWeekId, weekday, category, optionIndex])
+}
+
+model AttendanceLog {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  attendedAt   DateTime @default(now())
+  attendedDate DateTime
+  source       String   @default("app")
+  service      String   @default("lunch")
+  notes        String?
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([attendedAt])
+  @@unique([userId, attendedDate, service])
+}
+
+model ErrorLog {
+  id        Int      @id @default(autoincrement())
+  scope     String
+  message   String
+  meta      Json?
+  stack     String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

@@ -1,0 +1,18 @@
+{
+  "users": [
+    { "fullName": "Miki Lopez", "email": "miki@happypunt.local", "role": "ADMIN" },
+    { "fullName": "Cocina Principal", "email": "cocina@happypunt.local", "role": "COOK" },
+    { "fullName": "RRHH", "email": "rrhh@happypunt.local", "role": "HR" },
+    { "fullName": "Empleado 1", "email": "empleado1@happypunt.local", "role": "EMPLOYEE" }
+  ],
+  "allergens": [
+    { "code": "GLU", "name": "Gluten" },
+    { "code": "LAC", "name": "Lactosa" },
+    { "code": "HUE", "name": "Huevo" }
+  ],
+  "dishes": [
+    { "name": "Lentejas estofadas", "description": "Con verduras", "allergenCodes": [] },
+    { "name": "Pasta boloñesa", "description": "Pasta con carne", "allergenCodes": ["GLU"] },
+    { "name": "Tortilla de patatas", "description": "Clásica", "allergenCodes": ["HUE"] }
+  ]
+}
