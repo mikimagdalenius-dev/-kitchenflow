@@ -1,39 +1,13 @@
 import { prisma } from "@/lib/prisma";
-import { MENU_CATEGORY_LABEL } from "@/lib/ui";
+import { MENU_CATEGORY_LABEL, WEEKDAY_NAMES, sortByCategoryAndOption } from "@/lib/ui";
+import { currentWeekRange } from "@/lib/dates";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
-
-const weekdayNames = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
-
-const categoryOrder: Record<string, number> = {
-  first: 1,
-  second: 2,
-  single: 3,
-  dessert: 4,
-  fruit: 4
-};
-
-function sortByCategoryAndOption<T extends { category: string; optionIndex: number }>(items: T[]) {
-  return items
-    .slice()
-    .sort((a, b) => {
-      const categoryDiff = (categoryOrder[a.category] ?? 99) - (categoryOrder[b.category] ?? 99);
-      if (categoryDiff !== 0) return categoryDiff;
-      return a.optionIndex - b.optionIndex;
-    });
-}
 
 export const dynamic = "force-dynamic";
 
 export default async function CalendarioPage() {
-  const now = new Date();
-  const dayOffsetFromMonday = (now.getUTCDay() + 6) % 7;
-  const currentWeekStart = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - dayOffsetFromMonday)
-  );
-  const nextWeekStart = new Date(
-    Date.UTC(currentWeekStart.getUTCFullYear(), currentWeekStart.getUTCMonth(), currentWeekStart.getUTCDate() + 7)
-  );
+  const { currentWeekStart, nextWeekStart } = currentWeekRange();
 
   const currentWeek = await prisma.menuWeek
     .findFirst({
@@ -64,9 +38,10 @@ export default async function CalendarioPage() {
       {currentWeek && (
         <>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {weekdayNames.slice(0, 3).map((name, index) => {
+            {[1, 2, 3].map((weekday) => {
+              const name = WEEKDAY_NAMES[weekday];
               const day = sortByCategoryAndOption(
-                currentWeek.menuItems.filter((item) => item.weekday === index + 1)
+                currentWeek.menuItems.filter((item) => item.weekday === weekday)
               );
               return (
                 <article key={name} className="pc-card p-4">
@@ -91,9 +66,10 @@ export default async function CalendarioPage() {
           </div>
 
           <div className="mt-3 flex flex-col gap-3 md:flex-row md:justify-center">
-            {weekdayNames.slice(3).map((name, offset) => {
+            {[4, 5].map((weekday) => {
+              const name = WEEKDAY_NAMES[weekday];
               const day = sortByCategoryAndOption(
-                currentWeek.menuItems.filter((item) => item.weekday === offset + 4)
+                currentWeek.menuItems.filter((item) => item.weekday === weekday)
               );
               return (
                 <article key={name} className="pc-card p-4 md:w-[calc(50%-0.375rem)] xl:w-[calc(33.333%-0.5rem)]">

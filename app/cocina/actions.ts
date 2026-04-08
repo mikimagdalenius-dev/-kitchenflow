@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { parseIsoDateOnly, parsePositiveInt } from "@/lib/validation";
 import { logError } from "@/lib/logger";
 import { logAudit } from "@/lib/audit";
+import { dishMatchesCategory } from "@/lib/ui";
 
 const monThuCategories = ["first", "second", "dessert"];
 const fridayCategories = ["single", "dessert", "fruit"];
@@ -17,11 +18,6 @@ function mapDishTypeToExcelTable(dishType: string) {
   if (dishType === "first") return "Primeros";
   if (dishType === "second" || dishType === "single") return "Segundos";
   return "Postres";
-}
-
-function dishTypeMatchesCategory(dishType: string, category: string) {
-  if (category === "fruit") return dishType === "dessert";
-  return dishType === category;
 }
 
 function validarReglaDia(weekday: number, category: string) {
@@ -141,26 +137,28 @@ export async function createWeekAction(formData: FormData) {
     });
   }
 
-  for (const weekday of [1, 2, 3, 4]) {
-    await prisma.menuItem.upsert({
-      where: {
-        menuWeekId_weekday_category_optionIndex: {
+  await Promise.all(
+    [1, 2, 3, 4].map((weekday) =>
+      prisma.menuItem.upsert({
+        where: {
+          menuWeekId_weekday_category_optionIndex: {
+            menuWeekId: week.id,
+            weekday,
+            category: "first",
+            optionIndex: 1
+          }
+        },
+        update: {},
+        create: {
           menuWeekId: week.id,
+          dishId: saladDish.id,
           weekday,
           category: "first",
           optionIndex: 1
         }
-      },
-      update: {},
-      create: {
-        menuWeekId: week.id,
-        dishId: saladDish.id,
-        weekday,
-        category: "first",
-        optionIndex: 1
-      }
-    });
-  }
+      })
+    )
+  );
 
   await logAudit("cocina.createWeek", sessionUser, {
     menuWeekId: week.id,
@@ -193,7 +191,7 @@ export async function assignMenuItemAction(formData: FormData) {
     select: { dishType: true }
   });
 
-  if (!dish || !dishTypeMatchesCategory(dish.dishType, category)) return;
+  if (!dish || !dishMatchesCategory(dish.dishType, category)) return;
 
   if (description) {
     await prisma.dish.update({ where: { id: dishId }, data: { description } }).catch(() => null);
@@ -219,20 +217,25 @@ export async function assignMenuItemAction(formData: FormData) {
       }
     });
   } else {
-    const last = await prisma.menuItem.findFirst({
-      where: { menuWeekId, weekday, category },
-      orderBy: { optionIndex: "desc" }
-    });
+    await prisma.$transaction(
+      async (tx) => {
+        const last = await tx.menuItem.findFirst({
+          where: { menuWeekId, weekday, category },
+          orderBy: { optionIndex: "desc" }
+        });
 
-    await prisma.menuItem.create({
-      data: {
-        menuWeekId,
-        dishId,
-        weekday,
-        category,
-        optionIndex: (last?.optionIndex ?? 0) + 1
-      }
-    });
+        await tx.menuItem.create({
+          data: {
+            menuWeekId,
+            dishId,
+            weekday,
+            category,
+            optionIndex: (last?.optionIndex ?? 0) + 1
+          }
+        });
+      },
+      { isolationLevel: "Serializable" }
+    );
   }
 
   await logAudit("cocina.assignMenuItem", sessionUser, {

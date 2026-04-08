@@ -3,17 +3,12 @@ import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { canAccess, getSessionUser } from "@/lib/auth";
 import { formatUserName } from "@/lib/ui";
+import { startOfMadridDay } from "@/lib/dates";
 import { createUserAction, updateMyIntolerancesAction } from "./actions";
 import { AdminUserManager } from "./admin-user-manager";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 
 export const dynamic = "force-dynamic";
-
-function inicioDelDia(fecha: Date) {
-  const d = new Date(fecha);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
 
 export default async function UsuariosPage({
   searchParams
@@ -36,7 +31,7 @@ export default async function UsuariosPage({
   const soloTablaFichajes = sessionUser.role === Role.COOK;
   const puedeGestionarUsuarios = canAccess(sessionUser.role, [Role.ADMIN]);
 
-  const hoy = inicioDelDia(new Date());
+  const hoy = startOfMadridDay(new Date());
 
   const [users, fichajesHoy, allergens, yo] = await Promise.all([
     prisma.user

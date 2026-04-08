@@ -41,3 +41,15 @@ export function formatDateOnlyEs(date: Date) {
     timeZone: MADRID_TZ
   }).format(date);
 }
+
+export function currentWeekRange(): { currentWeekStart: Date; nextWeekStart: Date } {
+  const now = new Date();
+  const dayOffsetFromMonday = (now.getUTCDay() + 6) % 7;
+  const currentWeekStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - dayOffsetFromMonday)
+  );
+  const nextWeekStart = new Date(
+    Date.UTC(currentWeekStart.getUTCFullYear(), currentWeekStart.getUTCMonth(), currentWeekStart.getUTCDate() + 7)
+  );
+  return { currentWeekStart, nextWeekStart };
+}

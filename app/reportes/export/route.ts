@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { cookies } from "next/headers";
+import { getIronSession } from "iron-session";
 import { Prisma, Role } from "@prisma/client";
+import { sessionOptions, type SessionData } from "@/lib/session";
 import * as XLSX from "xlsx";
 import { prisma } from "@/lib/prisma";
 import { formatDateOnlyEs, formatDateTimeEs, parseDateInput } from "@/lib/dates";
@@ -35,14 +37,13 @@ function buildExportParams(params: URLSearchParams) {
 
 export async function GET(req: NextRequest) {
   const cookieStore = await cookies();
-  const rawUserId = cookieStore.get("kf_user_id")?.value;
-  const userId = rawUserId ? Number(rawUserId) : NaN;
+  const session = await getIronSession<SessionData>(cookieStore, sessionOptions);
 
-  if (!Number.isFinite(userId)) {
+  if (!session.userId) {
     return new Response("No autorizado", { status: 401 });
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, active: true } });
+  const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { role: true, active: true } });
   if (!user || !user.active || (user.role !== Role.HR && user.role !== Role.ADMIN && user.role !== Role.COOK)) {
     return new Response("No autorizado", { status: 403 });
   }

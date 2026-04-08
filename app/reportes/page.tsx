@@ -66,14 +66,12 @@ export default async function ReportesPage({
   };
 
   const exportParams = new URLSearchParams({ month: selected });
-  const cloudExcelUrl =
-    process.env.NEXT_PUBLIC_ATTENDANCE_EXCEL_URL?.trim() ||
-    "https://happypuntslu365-my.sharepoint.com/:x:/r/personal/miquelll_happypunt_com/Documents/fichajes%20cocina.xlsx?d=w29df889e623f42b4b6cc0bd2a8170268&csf=1&web=1&e=0jtFoE";
+  const cloudExcelUrl = process.env.NEXT_PUBLIC_ATTENDANCE_EXCEL_URL?.trim() ?? null;
   if (hasUserFilter) exportParams.set("userId", String(filterUserId));
   if (params.fromDate) exportParams.set("fromDate", params.fromDate);
   if (params.toDate) exportParams.set("toDate", params.toDate);
 
-  const [totalLogs, thisMonthLogs, todayLogs, weekLogs, previousWeekLogs, monthUniqueUsers, monthHourRows, users, recentLogs] = await Promise.all([
+  const [totalLogs, thisMonthLogs, todayLogs, weekLogs, previousWeekLogs, monthUniqueUsers, peakHourRows, users, recentLogs] = await Promise.all([
     prisma.attendanceLog.count().catch(() => 0),
     prisma.attendanceLog
       .count({
@@ -125,17 +123,15 @@ export default async function ReportesPage({
       })
       .then((rows) => rows.length)
       .catch(() => 0),
-    prisma.attendanceLog
-      .findMany({
-        where: {
-          attendedDate: {
-            gte: from,
-            lt: to
-          }
-        },
-        select: { attendedAt: true }
-      })
-      .catch(() => []),
+    prisma.$queryRaw<Array<{ hour: number; count: bigint }>>`
+      SELECT EXTRACT(HOUR FROM "attendedAt" AT TIME ZONE 'Europe/Madrid')::int AS hour,
+             COUNT(*)::bigint AS count
+      FROM "AttendanceLog"
+      WHERE "attendedDate" >= ${from} AND "attendedDate" < ${to}
+      GROUP BY hour
+      ORDER BY count DESC
+      LIMIT 1
+    `.catch(() => []),
     prisma.user
       .findMany({
         where: { active: true },
@@ -161,19 +157,10 @@ export default async function ReportesPage({
       ? `+${weekDelta} vs semana pasada`
       : `${weekDelta} vs semana pasada`;
 
-  const hourBuckets = new Map<number, number>();
-  for (const row of monthHourRows) {
-    const hourInMadrid = Number(
-      new Intl.DateTimeFormat("es-ES", {
-        hour: "2-digit",
-        hour12: false,
-        timeZone: "Europe/Madrid"
-      }).format(new Date(row.attendedAt))
-    );
-    hourBuckets.set(hourInMadrid, (hourBuckets.get(hourInMadrid) ?? 0) + 1);
-  }
-  const peakHour = [...hourBuckets.entries()].sort((a, b) => b[1] - a[1])[0];
-  const peakHourLabel = peakHour ? `${String(peakHour[0]).padStart(2, "0")}:00 (${peakHour[1]})` : "Sin datos";
+  const peakHour = peakHourRows[0];
+  const peakHourLabel = peakHour
+    ? `${String(peakHour.hour).padStart(2, "0")}:00 (${Number(peakHour.count)})`
+    : "Sin datos";
 
   return (
     <section className="page-stack text-center">
@@ -197,14 +184,16 @@ export default async function ReportesPage({
         <button className="pc-btn" type="submit">
           Actualizar
         </button>
-        <Link
-          className="pc-btn pc-btn-secondary hover:no-underline"
-          href={cloudExcelUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Excel RRHH (cloud)
-        </Link>
+        {cloudExcelUrl && (
+          <Link
+            className="pc-btn pc-btn-secondary hover:no-underline"
+            href={cloudExcelUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Excel RRHH (cloud)
+          </Link>
+        )}
         <Link className="pc-btn pc-btn-secondary hover:no-underline" href={`/reportes/export?${exportParams.toString()}`}>
           Descargar copia
         </Link>

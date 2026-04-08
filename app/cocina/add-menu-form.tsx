@@ -1,18 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { WEEKDAY_NAMES, WORKDAYS } from "@/lib/ui";
+import { DISH_TYPES, MENU_CATEGORY_LABEL, WEEKDAY_NAMES, WORKDAYS, dishMatchesCategory } from "@/lib/ui";
 import { assignMenuItemAction } from "./actions";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 
 type WeekItem = { id: number; weekStart: string };
 type DishItem = { id: number; name: string; dishType: string };
-
-function dishMatchesCategory(dishType: string, category: string) {
-  if (!category) return true;
-  if (category === "fruit") return dishType === "dessert";
-  return dishType === category;
-}
 
 export function AddMenuForm({ weeks, dishes }: { weeks: WeekItem[]; dishes: DishItem[] }) {
   const [dishQuery, setDishQuery] = useState("");
@@ -78,10 +72,11 @@ export function AddMenuForm({ weeks, dishes }: { weeks: WeekItem[]; dishes: Dish
         }}
       >
         <option value="">Categoría...</option>
-        <option value="first">Primer plato</option>
-        <option value="second">Segundo plato</option>
-        <option value="single">Plato único</option>
-        <option value="dessert">Postre</option>
+        {DISH_TYPES.map((type) => (
+          <option key={type} value={type}>
+            {MENU_CATEGORY_LABEL[type] ?? type}
+          </option>
+        ))}
       </select>
 
       <input

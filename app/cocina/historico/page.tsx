@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { canAccess, getSessionUser } from "@/lib/auth";
@@ -19,13 +20,7 @@ export default async function CocinaHistoricoPage() {
   }
 
   if (!canAccess(sessionUser.role, [Role.COOK, Role.ADMIN])) {
-    return (
-      <section className="pc-card p-4">
-        <p className="text-sm text-slate-700">
-          Necesitas iniciar sesión para ver el histórico. <Link href="/acceso?volverA=/cocina/historico">Ir a acceso</Link>
-        </p>
-      </section>
-    );
+    redirect("/");
   }
 
   const weeks = await prisma.menuWeek.findMany({

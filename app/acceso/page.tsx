@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
-import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getSessionUser } from "@/lib/auth";
+import { getSessionUser, roleLabel } from "@/lib/auth";
 import { iniciarSesionAction } from "./actions";
 import { UserPicker } from "./user-picker";
 
@@ -13,11 +12,12 @@ export default async function AccesoPage({
   searchParams?: Promise<{ volverA?: string }>;
 }) {
   const params = (await searchParams) ?? {};
-  const volverA = params.volverA || "/usuarios";
+  const rawVolverA = params.volverA ?? "";
+  const volverA = rawVolverA.startsWith("/") && !rawVolverA.startsWith("//") ? rawVolverA : "/usuarios";
 
   const sessionUser = await getSessionUser();
   if (sessionUser) {
-    redirect(volverA && volverA !== "/acceso" ? volverA : "/usuarios");
+    redirect(volverA !== "/acceso" ? volverA : "/usuarios");
   }
 
   const usersRaw = await prisma.user
@@ -28,15 +28,7 @@ export default async function AccesoPage({
     })
     .catch(() => []);
 
-  const roleNames: Record<Role, string> = {
-    EMPLOYEE: "Empleado",
-    COOK: "Cocinero",
-    ADMIN: "Administrador",
-    HR: "RRHH",
-    KIOSK: "fichajes_iPad"
-  };
-
-  const users = usersRaw.map((u) => ({ ...u, role: roleNames[u.role] ?? u.role }));
+  const users = usersRaw.map((u) => ({ ...u, role: roleLabel[u.role] ?? u.role }));
 
   return (
     <section className="acceso-wrap">

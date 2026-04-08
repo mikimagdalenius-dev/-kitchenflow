@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { canAccess, getSessionUser } from "@/lib/auth";
 import { createDishAction, createWeekAction, deleteMenuItemAction } from "./actions";
 import { AddMenuForm } from "./add-menu-form";
-import { DISH_TYPE_LABEL, DISH_TYPES, MENU_CATEGORY_LABEL, WEEKDAY_NAMES, WORKDAYS } from "@/lib/ui";
+import { DISH_TYPE_LABEL, DISH_TYPES, MENU_CATEGORY_LABEL, WEEKDAY_NAMES, WORKDAYS, sortByCategoryAndOption } from "@/lib/ui";
+import { currentWeekRange } from "@/lib/dates";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -27,18 +28,7 @@ export default async function CocinaPage() {
 
   const puedeEditar = canAccess(sessionUser.role, [Role.COOK, Role.ADMIN]);
 
-  const now = new Date();
-  const dayOffsetFromMonday = (now.getUTCDay() + 6) % 7;
-  const currentWeekStart = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - dayOffsetFromMonday)
-  );
-  const nextWeekStart = new Date(
-    Date.UTC(
-      currentWeekStart.getUTCFullYear(),
-      currentWeekStart.getUTCMonth(),
-      currentWeekStart.getUTCDate() + 7
-    )
-  );
+  const { currentWeekStart, nextWeekStart } = currentWeekRange();
 
   const excelPlatosUrl = process.env.NEXT_PUBLIC_DISHES_EXCEL_URL?.trim();
 
@@ -132,22 +122,9 @@ export default async function CocinaPage() {
 
           <div className="mt-3 grid gap-2 text-sm text-slate-700">
             {WORKDAYS.map((day) => {
-              const categoryOrder: Record<string, number> = {
-                first: 1,
-                second: 2,
-                dessert: 3,
-                fruit: 3,
-                single: 4
-              };
-
-              const dayItems = week.menuItems
-                .filter((item) => item.weekday === day)
-                .slice()
-                .sort((a, b) => {
-                  const categoryDiff = (categoryOrder[a.category] ?? 99) - (categoryOrder[b.category] ?? 99);
-                  if (categoryDiff !== 0) return categoryDiff;
-                  return a.optionIndex - b.optionIndex;
-                });
+              const dayItems = sortByCategoryAndOption(
+                week.menuItems.filter((item) => item.weekday === day)
+              );
 
               return (
                 <div key={day} className="rounded border border-dashed border-slate-300 bg-white px-3 py-2">

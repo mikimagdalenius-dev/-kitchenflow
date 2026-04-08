@@ -11,6 +11,7 @@
   --text-main: #0f172a;
   --text-muted: #475569;
   --primary: #1f4fd6;
+  --primary-light: #2f65ea;
   --primary-strong: #163ea9;
   --primary-soft: #e8eef9;
   --border-soft: #dbe5f3;
@@ -32,7 +33,7 @@ body {
 }
 
 a {
-  color: #2563eb;
+  color: var(--primary);
   text-decoration: none;
 }
 
@@ -96,9 +97,9 @@ a {
 }
 
 .pc-tab.is-active {
-  background: #1d4ed8;
+  background: var(--primary);
   color: white;
-  border-color: #1d4ed8;
+  border-color: var(--primary);
 }
 
 .pc-shell {
@@ -164,7 +165,6 @@ a {
 }
 
 .pc-card:hover {
-  transform: translateY(-1px);
   border-color: #c9d9f1;
   box-shadow: 0 14px 34px rgba(15, 23, 42, 0.1);
 }
@@ -228,10 +228,10 @@ a {
 
 .pc-btn {
   border: 0;
-  background: linear-gradient(180deg, #2f65ea 0%, var(--primary) 100%);
+  background: linear-gradient(180deg, var(--primary-light) 0%, var(--primary) 100%);
   color: #fff;
   border-radius: var(--field-radius);
-  font-weight: 650;
+  font-weight: 600;
   padding: 10px 14px;
   cursor: pointer;
   transition: transform 0.15s ease, filter 0.2s ease, box-shadow 0.2s ease;

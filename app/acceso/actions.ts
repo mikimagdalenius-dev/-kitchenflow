@@ -1,22 +1,23 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { getIronSession } from "iron-session";
 import { redirect } from "next/navigation";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { sessionOptions, type SessionData } from "@/lib/session";
 
 export async function iniciarSesionAction(formData: FormData) {
   const userId = Number(formData.get("userId"));
-  const volverA = String(formData.get("volverA") ?? "/usuarios");
+  const rawVolverA = String(formData.get("volverA") ?? "");
+  const volverA = rawVolverA.startsWith("/") && !rawVolverA.startsWith("//") ? rawVolverA : "/usuarios";
 
-  if (!Number.isFinite(userId)) return;
+  if (!Number.isFinite(userId) || userId <= 0) return;
 
   const cookieStore = await cookies();
-  cookieStore.set("kf_user_id", String(userId), {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/"
-  });
+  const session = await getIronSession<SessionData>(cookieStore, sessionOptions);
+  session.userId = userId;
+  await session.save();
 
   const requestedDestino = volverA && volverA !== "/" ? volverA : "/usuarios";
 
@@ -31,6 +32,7 @@ export async function iniciarSesionAction(formData: FormData) {
 
 export async function cerrarSesionAction() {
   const cookieStore = await cookies();
-  cookieStore.delete("kf_user_id");
+  const session = await getIronSession<SessionData>(cookieStore, sessionOptions);
+  session.destroy();
   redirect("/acceso");
 }

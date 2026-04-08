@@ -9,6 +9,7 @@ import { normalizeName, normalizeOptionalEmail, parsePositiveInt } from "@/lib/v
 import { logError } from "@/lib/logger";
 import { logAudit } from "@/lib/audit";
 import { syncAttendanceToExcel } from "@/lib/attendance-sync";
+import { startOfMadridDay } from "@/lib/dates";
 
 function esErrorUnico(error: unknown) {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
@@ -126,12 +127,6 @@ export async function createUserAction(formData: FormData) {
   redirect("/usuarios?user=created");
 }
 
-function inicioDelDia(fecha: Date) {
-  const d = new Date(fecha);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
 export async function logAttendanceAction(formData: FormData) {
   const sessionUser = await requireRole([Role.EMPLOYEE, Role.COOK, Role.ADMIN, Role.HR]);
 
@@ -139,7 +134,7 @@ export async function logAttendanceAction(formData: FormData) {
   const service = "lunch";
 
   const ahora = new Date();
-  const attendedDate = inicioDelDia(ahora);
+  const attendedDate = startOfMadridDay(ahora);
 
   const existente = await prisma.attendanceLog.findUnique({
     where: {
@@ -166,11 +161,10 @@ export async function logAttendanceAction(formData: FormData) {
       }
     });
 
-    const usuario = await prisma.user.findUnique({ where: { id: userId }, select: { fullName: true } });
     await syncAttendanceToExcel({
       attendanceId: created.id,
       userId,
-      fullName: usuario?.fullName ?? `user-${userId}`,
+      fullName: sessionUser.fullName,
       attendedAt: ahora,
       attendedDate,
       service,

@@ -28,3 +28,24 @@ export const DISH_TYPES = ["first", "second", "single", "dessert"] as const;
 export function formatUserName(name: string) {
   return name.trim().toLowerCase() === "didac molto" ? `👨‍🍳 ${name}` : name;
 }
+
+export const CATEGORY_ORDER: Record<string, number> = {
+  first: 1,
+  second: 2,
+  single: 3,
+  dessert: 4,
+  fruit: 4
+};
+
+export function sortByCategoryAndOption<T extends { category: string; optionIndex: number }>(items: T[]): T[] {
+  return items.slice().sort((a, b) => {
+    const diff = (CATEGORY_ORDER[a.category] ?? 99) - (CATEGORY_ORDER[b.category] ?? 99);
+    return diff !== 0 ? diff : a.optionIndex - b.optionIndex;
+  });
+}
+
+export function dishMatchesCategory(dishType: string, category: string): boolean {
+  if (!category) return true;
+  if (category === "fruit") return dishType === "dessert";
+  return dishType === category;
+}
