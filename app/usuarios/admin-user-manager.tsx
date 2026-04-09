@@ -12,6 +12,8 @@ type UserItem = {
   email: string | null;
   role: "EMPLOYEE" | "COOK" | "ADMIN" | "HR" | "KIOSK";
   intoleranceIds: number[];
+  attendsCafeteria: boolean;
+  factorialId: string | null;
 };
 
 type AllergenItem = {
@@ -37,6 +39,8 @@ export function AdminUserManager({
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserItem["role"]>("EMPLOYEE");
   const [selectedAllergens, setSelectedAllergens] = useState<number[]>([]);
+  const [attendsCafeteria, setAttendsCafeteria] = useState(true);
+  const [factorialId, setFactorialId] = useState("");
 
   useEffect(() => {
     if (!selectedUser) {
@@ -44,6 +48,8 @@ export function AdminUserManager({
       setEmail("");
       setRole("EMPLOYEE");
       setSelectedAllergens([]);
+      setAttendsCafeteria(true);
+      setFactorialId("");
       return;
     }
     setUserQuery(formatUserName(selectedUser.fullName));
@@ -51,6 +57,8 @@ export function AdminUserManager({
     setEmail(selectedUser.email ?? "");
     setRole(selectedUser.role);
     setSelectedAllergens(selectedUser.intoleranceIds);
+    setAttendsCafeteria(selectedUser.attendsCafeteria);
+    setFactorialId(selectedUser.factorialId ?? "");
   }, [selectedUser]);
 
   if (users.length === 0) {
@@ -120,6 +128,30 @@ export function AdminUserManager({
           placeholder="Correo"
           disabled={!selectedUser}
         />
+
+        <input
+          name="factorialId"
+          className="pc-select"
+          value={factorialId}
+          onChange={(e) => setFactorialId(e.target.value)}
+          placeholder="ID Factorial (opcional)"
+          disabled={!selectedUser}
+        />
+
+        <label className="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+          <input
+            type="hidden"
+            name="attendsCafeteria"
+            value={attendsCafeteria ? "1" : "0"}
+          />
+          <input
+            type="checkbox"
+            checked={attendsCafeteria}
+            onChange={(e) => setAttendsCafeteria(e.target.checked)}
+            disabled={!selectedUser}
+          />
+          Asiste al comedor
+        </label>
 
         {allergens.length > 0 && (
           <fieldset className="rounded border border-slate-200 p-2 text-left">

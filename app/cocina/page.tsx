@@ -5,7 +5,7 @@ import { canAccess, getSessionUser } from "@/lib/auth";
 import { createDishAction, createWeekAction, deleteMenuItemAction } from "./actions";
 import { AddMenuForm } from "./add-menu-form";
 import { DISH_TYPE_LABEL, DISH_TYPES, MENU_CATEGORY_LABEL, WEEKDAY_NAMES, WORKDAYS, sortByCategoryAndOption } from "@/lib/ui";
-import { currentWeekRange } from "@/lib/dates";
+import { currentWeekRange, startOfMadridDay } from "@/lib/dates";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -32,7 +32,7 @@ export default async function CocinaPage() {
 
   const excelPlatosUrl = process.env.NEXT_PUBLIC_DISHES_EXCEL_URL?.trim();
 
-  const [weeks, dishes] = await Promise.all([
+  const [weeks, dishes, headcount] = await Promise.all([
     prisma.menuWeek
       .findMany({
         where: {
@@ -50,12 +50,23 @@ export default async function CocinaPage() {
         }
       })
       .catch(() => []),
-    prisma.dish.findMany({ orderBy: { name: "asc" }, take: 150 }).catch(() => [])
+    prisma.dish.findMany({ orderBy: { name: "asc" }, take: 150 }).catch(() => []),
+    prisma.attendanceLog
+      .count({ where: { attendedDate: startOfMadridDay(new Date()), service: "lunch" } })
+      .catch(() => 0)
   ]);
 
   return (
     <section className="page-stack">
       <PageHeader title="Cocina" subtitle="Gestión semanal de platos y menús." />
+
+      <div className="flex justify-center">
+        <div className="pc-card px-6 py-3 text-center">
+          <p className="text-sm text-slate-500">Hoy en el comedor</p>
+          <p className="text-3xl font-bold text-slate-800">{headcount}</p>
+          <p className="text-xs text-slate-400">personas fichadas</p>
+        </div>
+      </div>
 
       {puedeEditar && (
         <div className="grid gap-3 md:grid-cols-3 text-center">

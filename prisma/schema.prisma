@@ -16,15 +16,17 @@ enum Role {
 }
 
 model User {
-  id           Int               @id @default(autoincrement())
-  fullName     String
-  email        String?           @unique
-  role         Role              @default(EMPLOYEE)
-  active       Boolean           @default(true)
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  intolerances UserIntolerance[]
-  attendances  AttendanceLog[]
+  id               Int               @id @default(autoincrement())
+  fullName         String
+  email            String?           @unique
+  role             Role              @default(EMPLOYEE)
+  active           Boolean           @default(true)
+  attendsCafeteria Boolean           @default(true)
+  factorialId      String?           @unique
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  intolerances     UserIntolerance[]
+  attendances      AttendanceLog[]
 }
 
 model Allergen {

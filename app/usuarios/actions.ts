@@ -6,6 +6,7 @@ import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { esErrorUnico, normalizeName, normalizeOptionalEmail, parsePositiveInt } from "@/lib/validation";
+import { startOfMadridDay } from "@/lib/dates";
 import { logError } from "@/lib/logger";
 import { logAudit } from "@/lib/audit";
 import { recordAttendance } from "@/lib/attendance";
@@ -122,6 +123,22 @@ export async function createUserAction(formData: FormData) {
   redirect("/usuarios?user=created");
 }
 
+export async function cancelAttendanceAction() {
+  const sessionUser = await requireRole([Role.EMPLOYEE, Role.COOK, Role.ADMIN, Role.HR]);
+  const today = startOfMadridDay(new Date());
+
+  await prisma.attendanceLog.deleteMany({
+    where: { userId: sessionUser.id, attendedDate: today, service: "lunch" }
+  });
+
+  await logAudit("usuarios.cancelAttendance", sessionUser, { date: today.toISOString() });
+
+  revalidatePath("/usuarios");
+  revalidatePath("/cocina");
+  revalidatePath("/reportes");
+  redirect("/usuarios?fichaje=cancelado");
+}
+
 export async function logAttendanceAction(formData: FormData) {
   const sessionUser = await requireRole([Role.EMPLOYEE, Role.COOK, Role.ADMIN, Role.HR]);
 
@@ -143,6 +160,9 @@ export async function updateUserAction(formData: FormData) {
   const email = normalizeOptionalEmail(formData.get("email"));
   const roleRaw = String(formData.get("role") ?? "EMPLOYEE");
   const allergenIds = parseAllergenIds(formData);
+  const attendsCafeteria = formData.get("attendsCafeteria") === "1";
+  const factorialIdRaw = String(formData.get("factorialId") ?? "").trim();
+  const factorialId = factorialIdRaw || null;
 
   if (!userId || !fullName) {
     redirect("/usuarios?user=error-validacion");
@@ -160,7 +180,9 @@ export async function updateUserAction(formData: FormData) {
         data: {
           fullName,
           email,
-          role
+          role,
+          attendsCafeteria,
+          factorialId
         }
       }),
       prisma.userIntolerance.deleteMany({ where: { userId } }),

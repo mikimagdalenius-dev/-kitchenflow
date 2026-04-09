@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { canAccess, getSessionUser } from "@/lib/auth";
 import { formatUserName } from "@/lib/ui";
 import { startOfMadridDay } from "@/lib/dates";
-import { createUserAction, updateMyIntolerancesAction } from "./actions";
+import { cancelAttendanceAction, createUserAction, updateMyIntolerancesAction } from "./actions";
 import { AdminUserManager } from "./admin-user-manager";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function UsuariosPage({
   searchParams
 }: {
-  searchParams?: Promise<{ user?: string; alergias?: string }>;
+  searchParams?: Promise<{ user?: string; alergias?: string; fichaje?: string }>;
 }) {
   const params = (await searchParams) ?? {};
   const sessionUser = await getSessionUser();
@@ -33,7 +33,7 @@ export default async function UsuariosPage({
 
   const hoy = startOfMadridDay(new Date());
 
-  const [users, fichajesHoy, allergens, yo] = await Promise.all([
+  const [users, fichajesHoy, allergens, yo, fichajePropio] = await Promise.all([
     prisma.user
       .findMany({
         orderBy: { fullName: "asc" },
@@ -78,7 +78,13 @@ export default async function UsuariosPage({
           }
         }
       }
-    })
+    }),
+    prisma.attendanceLog
+      .findUnique({
+        where: { userId_attendedDate_service: { userId: sessionUser.id, attendedDate: hoy, service: "lunch" } },
+        select: { id: true }
+      })
+      .catch(() => null)
   ]);
 
   const misAlergenos = yo?.intolerances.filter((i) => i.allergen.code !== "OTROS").map((i) => i.allergenId) ?? [];
@@ -96,6 +102,9 @@ export default async function UsuariosPage({
 
       {!soloTablaFichajes && (
         <>
+          {params.fichaje === "cancelado" && (
+            <div className="pc-toast pc-toast-success">✅ Comida cancelada para hoy.</div>
+          )}
           {params.alergias === "ok" && (
             <div className="pc-toast pc-toast-success">✅ Alergias/intolerancias actualizadas.</div>
           )}
@@ -162,6 +171,16 @@ export default async function UsuariosPage({
             </div>
           </form>
 
+          {fichajePropio && (
+            <div className="flex justify-center">
+              <form action={cancelAttendanceAction}>
+                <button type="submit" className="pc-btn pc-btn-secondary">
+                  Cancelar mi comida de hoy
+                </button>
+              </form>
+            </div>
+          )}
+
           {puedeGestionarUsuarios && <h2 className="text-xl font-semibold text-slate-800 text-center">Panel admin</h2>}
 
           <div className="users-admin-grid">
@@ -203,7 +222,9 @@ export default async function UsuariosPage({
                   fullName: u.fullName,
                   email: u.email,
                   role: u.role,
-                  intoleranceIds: u.intolerances.map((i) => i.allergenId)
+                  intoleranceIds: u.intolerances.map((i) => i.allergenId),
+                  attendsCafeteria: u.attendsCafeteria,
+                  factorialId: u.factorialId
                 }))}
                 currentUserId={sessionUser.id}
                 allergens={allergens}
