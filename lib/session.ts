@@ -2,6 +2,7 @@ import { SessionOptions } from "iron-session";
 
 export interface SessionData {
   userId?: number;
+  pendingUserId?: number;
 }
 
 export const sessionOptions: SessionOptions = {
