@@ -2,18 +2,13 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { Prisma, Role } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { normalizeName, normalizeOptionalEmail, parsePositiveInt } from "@/lib/validation";
+import { esErrorUnico, normalizeName, normalizeOptionalEmail, parsePositiveInt } from "@/lib/validation";
 import { logError } from "@/lib/logger";
 import { logAudit } from "@/lib/audit";
-import { syncAttendanceToExcel } from "@/lib/attendance-sync";
-import { startOfMadridDay } from "@/lib/dates";
-
-function esErrorUnico(error: unknown) {
-  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
-}
+import { recordAttendance } from "@/lib/attendance";
 
 function parseAllergenIds(formData: FormData) {
   const ids = formData
@@ -130,50 +125,10 @@ export async function createUserAction(formData: FormData) {
 export async function logAttendanceAction(formData: FormData) {
   const sessionUser = await requireRole([Role.EMPLOYEE, Role.COOK, Role.ADMIN, Role.HR]);
 
-  const userId = sessionUser.id;
-  const service = "lunch";
+  const result = await recordAttendance(sessionUser.id, sessionUser.fullName, "app");
 
-  const ahora = new Date();
-  const attendedDate = startOfMadridDay(ahora);
-
-  const existente = await prisma.attendanceLog.findUnique({
-    where: {
-      userId_attendedDate_service: {
-        userId,
-        attendedDate,
-        service
-      }
-    },
-    select: { id: true }
-  });
-
-  if (existente) {
-    redirect("/usuarios?fichaje=duplicado");
-  }
-
-  try {
-    const created = await prisma.attendanceLog.create({
-      data: {
-        userId,
-        service,
-        attendedAt: ahora,
-        attendedDate
-      }
-    });
-
-    await syncAttendanceToExcel({
-      attendanceId: created.id,
-      userId,
-      fullName: sessionUser.fullName,
-      attendedAt: ahora,
-      attendedDate,
-      service,
-      source: "app"
-    });
-  } catch (error) {
-    logError("usuarios.logAttendanceAction", error, { userId, service });
-    redirect("/usuarios?fichaje=error");
-  }
+  if (result === "duplicado") redirect("/usuarios?fichaje=duplicado");
+  if (result === "error") redirect("/usuarios?fichaje=error");
 
   revalidatePath("/usuarios");
   revalidatePath("/reportes");

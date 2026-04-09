@@ -8,11 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { parseIsoDateOnly, parsePositiveInt } from "@/lib/validation";
 import { logError } from "@/lib/logger";
 import { logAudit } from "@/lib/audit";
-import { dishMatchesCategory } from "@/lib/ui";
-
-const monThuCategories = ["first", "second", "dessert"];
-const fridayCategories = ["single", "dessert", "fruit"];
-const allowedDishTypes = ["first", "second", "single", "dessert"] as const;
+import { ALLOWED_DISH_TYPES, FRIDAY_CATEGORIES, MON_THU_CATEGORIES, dishMatchesCategory } from "@/lib/ui";
 
 function mapDishTypeToExcelTable(dishType: string) {
   if (dishType === "first") return "Primeros";
@@ -21,8 +17,8 @@ function mapDishTypeToExcelTable(dishType: string) {
 }
 
 function validarReglaDia(weekday: number, category: string) {
-  if (weekday >= 1 && weekday <= 4) return monThuCategories.includes(category);
-  if (weekday === 5) return fridayCategories.includes(category);
+  if (weekday >= 1 && weekday <= 4) return (MON_THU_CATEGORIES as readonly string[]).includes(category);
+  if (weekday === 5) return (FRIDAY_CATEGORIES as readonly string[]).includes(category);
   return false;
 }
 
@@ -31,7 +27,7 @@ export async function createDishAction(formData: FormData) {
 
   const name = String(formData.get("name") ?? "").trim();
   const rawDishType = String(formData.get("dishType") ?? "").trim();
-  const dishType = allowedDishTypes.includes(rawDishType as (typeof allowedDishTypes)[number])
+  const dishType = ALLOWED_DISH_TYPES.includes(rawDishType as (typeof ALLOWED_DISH_TYPES)[number])
     ? rawDishType
     : null;
 

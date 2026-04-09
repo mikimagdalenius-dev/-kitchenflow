@@ -1,3 +1,9 @@
+import { Prisma } from "@prisma/client";
+
+export function esErrorUnico(error: unknown) {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
+}
+
 export function parsePositiveInt(value: FormDataEntryValue | null) {
   const n = Number(value);
   if (!Number.isInteger(n) || n <= 0) return null;

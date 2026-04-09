@@ -43,10 +43,11 @@ export function formatDateOnlyEs(date: Date) {
 }
 
 export function currentWeekRange(): { currentWeekStart: Date; nextWeekStart: Date } {
-  const now = new Date();
-  const dayOffsetFromMonday = (now.getUTCDay() + 6) % 7;
+  const today = startOfMadridDay(new Date());
+  const dayOfWeek = today.getUTCDay(); // 0=domingo, 1=lunes...
+  const dayOffsetFromMonday = (dayOfWeek + 6) % 7;
   const currentWeekStart = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - dayOffsetFromMonday)
+    Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - dayOffsetFromMonday)
   );
   const nextWeekStart = new Date(
     Date.UTC(currentWeekStart.getUTCFullYear(), currentWeekStart.getUTCMonth(), currentWeekStart.getUTCDate() + 7)

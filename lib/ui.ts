@@ -1,5 +1,9 @@
 export const WORKDAYS = [1, 2, 3, 4, 5] as const;
 
+export const MON_THU_CATEGORIES = ["first", "second", "dessert"] as const;
+export const FRIDAY_CATEGORIES = ["single", "dessert", "fruit"] as const;
+export const ALLOWED_DISH_TYPES = ["first", "second", "single", "dessert"] as const;
+
 export const WEEKDAY_NAMES: Record<number, string> = {
   1: "Lunes",
   2: "Martes",
