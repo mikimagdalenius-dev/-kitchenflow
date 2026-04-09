@@ -578,6 +578,37 @@ body:has(.kiosk-page) .pc-shell {
   font-size: clamp(18px, 2.3vw, 22px);
 }
 
+.kiosk-confirm {
+  display: grid;
+  gap: 14px;
+  text-align: center;
+  padding: 20px 0;
+  animation: fadeUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.kiosk-confirm-icon {
+  font-size: clamp(72px, 14vw, 120px);
+  line-height: 1;
+}
+
+.kiosk-confirm-name {
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+.kiosk-confirm-msg {
+  font-size: clamp(18px, 2.5vw, 28px);
+  font-weight: 500;
+}
+
+.kiosk-confirm-ok .kiosk-confirm-name { color: #166534; }
+.kiosk-confirm-ok .kiosk-confirm-msg  { color: #15803d; }
+
+.kiosk-confirm-dup .kiosk-confirm-name { color: #1e3a8a; }
+.kiosk-confirm-dup .kiosk-confirm-msg  { color: #1e40af; }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

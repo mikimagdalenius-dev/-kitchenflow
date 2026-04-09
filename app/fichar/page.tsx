@@ -25,6 +25,7 @@ export default async function FicharPage({
 
   const params = (await searchParams) ?? {};
   const hasStatus = Boolean(params.status);
+  const name = formatUserName(params.name ?? "");
 
   const users = await prisma.user
     .findMany({
@@ -34,37 +35,51 @@ export default async function FicharPage({
     })
     .catch(() => []);
 
+  const isOk = params.status === "ok";
+  const isDuplicated = params.status === "duplicado";
+
   return (
     <section className="kiosk-page">
-      <FicharReset active={hasStatus} />
+      <FicharReset active={hasStatus} delay={isOk || isDuplicated ? 3500 : 2200} />
       <div className="kiosk-wrap">
         {sessionUser.role === Role.ADMIN && (
           <div className="kiosk-admin-exit-wrap">
             <a href="/usuarios" className="pc-btn pc-btn-secondary kiosk-admin-exit">Salir del modo fichaje</a>
           </div>
         )}
-        <h1 className="kiosk-title">Fichaje comedor</h1>
-        <p className="kiosk-subtitle">Escribe tu nombre y pulsa fichar</p>
 
-        {params.status === "ok" && (
-          <div className="pc-toast pc-toast-success kiosk-toast">✅ Fichaje correcto: {formatUserName(params.name ?? "")}</div>
-        )}
-        {params.status === "duplicado" && (
-          <div className="pc-toast pc-toast-info kiosk-toast">ℹ️ {formatUserName(params.name ?? "Este usuario")} ya ha fichado hoy.</div>
-        )}
-        {params.status === "nombre-invalido" && (
-          <div className="pc-toast pc-toast-error kiosk-toast">❌ Selecciona un nombre válido de la lista.</div>
-        )}
-        {params.status === "error" && (
-          <div className="pc-toast pc-toast-error kiosk-toast">❌ No se ha podido registrar el fichaje. Inténtalo de nuevo.</div>
-        )}
-
-        <form action={quickLogAttendanceAction} className="pc-card kiosk-card">
-          <FicharPicker users={users} autoFocus inputClassName="kiosk-input" />
-          <div className="flex justify-center">
-            <FormSubmitButton idleText="Fichar" pendingText="Fichando..." className="kiosk-btn" />
+        {isOk ? (
+          <div className="kiosk-confirm kiosk-confirm-ok">
+            <div className="kiosk-confirm-icon">✅</div>
+            <div className="kiosk-confirm-name">{name}</div>
+            <div className="kiosk-confirm-msg">Fichaje registrado correctamente</div>
           </div>
-        </form>
+        ) : isDuplicated ? (
+          <div className="kiosk-confirm kiosk-confirm-dup">
+            <div className="kiosk-confirm-icon">ℹ️</div>
+            <div className="kiosk-confirm-name">{name}</div>
+            <div className="kiosk-confirm-msg">Ya has fichado hoy</div>
+          </div>
+        ) : (
+          <>
+            <h1 className="kiosk-title">Fichaje comedor</h1>
+            <p className="kiosk-subtitle">Escribe tu nombre y pulsa fichar</p>
+
+            {params.status === "nombre-invalido" && (
+              <div className="pc-toast pc-toast-error kiosk-toast">❌ Selecciona un nombre válido de la lista.</div>
+            )}
+            {params.status === "error" && (
+              <div className="pc-toast pc-toast-error kiosk-toast">❌ No se ha podido registrar el fichaje. Inténtalo de nuevo.</div>
+            )}
+
+            <form action={quickLogAttendanceAction} className="pc-card kiosk-card">
+              <FicharPicker users={users} autoFocus inputClassName="kiosk-input" />
+              <div className="flex justify-center">
+                <FormSubmitButton idleText="Fichar" pendingText="Fichando..." className="kiosk-btn" />
+              </div>
+            </form>
+          </>
+        )}
       </div>
     </section>
   );

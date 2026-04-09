@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export function FicharReset({ active }: { active: boolean }) {
+export function FicharReset({ active, delay = 2200 }: { active: boolean; delay?: number }) {
   const router = useRouter();
 
   useEffect(() => {
@@ -11,10 +11,10 @@ export function FicharReset({ active }: { active: boolean }) {
     const timer = window.setTimeout(() => {
       router.replace("/fichar");
       router.refresh();
-    }, 2200);
+    }, delay);
 
     return () => window.clearTimeout(timer);
-  }, [active, router]);
+  }, [active, delay, router]);
 
   return null;
 }
