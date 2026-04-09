@@ -41,7 +41,7 @@ export default async function AccesoPage({
         <form action={iniciarSesionAction} className="pc-card p-6 space-y-4">
         <input type="hidden" name="volverA" value={volverA} />
         <UserPicker users={users} />
-        <button className="pc-btn acceso-btn" type="submit" disabled={users.length === 0} style={{ background: "#000" }}>
+        <button className="pc-btn acceso-btn" type="submit" disabled={users.length === 0}>
           Entrar
         </button>
         {users.length === 0 && (
