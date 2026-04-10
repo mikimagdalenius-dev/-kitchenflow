@@ -1,21 +1,10 @@
-import { cookies } from "next/headers";
 import { Role } from "@prisma/client";
 import * as XLSX from "xlsx";
 import { prisma } from "@/lib/prisma";
+import { getSessionUser } from "@/lib/auth";
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const rawUserId = cookieStore.get("kf_user_id")?.value;
-  const userId = rawUserId ? Number(rawUserId) : NaN;
-
-  if (!Number.isFinite(userId)) {
-    return new Response("No autorizado", { status: 401 });
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true, active: true }
-  });
+  const user = await getSessionUser();
 
   if (!user || !user.active || (user.role !== Role.COOK && user.role !== Role.ADMIN)) {
     return new Response("No autorizado", { status: 403 });

@@ -7,7 +7,7 @@ import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, type SessionData } from "@/lib/session";
 
-const ADMIN_PIN = "Flow";
+const ADMIN_PIN = process.env.ADMIN_PIN!;
 
 export async function iniciarSesionAction(formData: FormData) {
   const userId = Number(formData.get("userId"));
@@ -39,6 +39,9 @@ export async function iniciarSesionAction(formData: FormData) {
   redirect(user.role === Role.KIOSK && destino === "/usuarios" ? "/fichar" : destino);
 }
 
+const PIN_MAX_ATTEMPTS = 5;
+const PIN_WINDOW_MS = 15 * 60 * 1000; // 15 minutos
+
 export async function verificarPinAction(formData: FormData) {
   const pin = String(formData.get("pin") ?? "");
   const rawVolverA = String(formData.get("volverA") ?? "");
@@ -51,7 +54,23 @@ export async function verificarPinAction(formData: FormData) {
     redirect("/acceso");
   }
 
+  const since = new Date(Date.now() - PIN_WINDOW_MS);
+  const recentFailures = await prisma.errorLog.count({
+    where: {
+      scope: "pin.failed",
+      createdAt: { gte: since },
+      message: String(session.pendingUserId)
+    }
+  });
+
+  if (recentFailures >= PIN_MAX_ATTEMPTS) {
+    redirect(`/acceso?step=pin&volverA=${encodeURIComponent(volverA)}&error=bloqueado`);
+  }
+
   if (pin !== ADMIN_PIN) {
+    await prisma.errorLog.create({
+      data: { scope: "pin.failed", message: String(session.pendingUserId) }
+    });
     redirect(`/acceso?step=pin&volverA=${encodeURIComponent(volverA)}&error=pin`);
   }
 

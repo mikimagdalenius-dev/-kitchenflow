@@ -35,6 +35,9 @@ export default async function AccesoPage({
             {params.error === "pin" && (
               <div className="pc-toast pc-toast-error">❌ PIN incorrecto. Inténtalo de nuevo.</div>
             )}
+            {params.error === "bloqueado" && (
+              <div className="pc-toast pc-toast-error">🔒 Demasiados intentos fallidos. Espera 15 minutos.</div>
+            )}
 
             <input
               type="password"
