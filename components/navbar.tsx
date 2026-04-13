@@ -3,6 +3,7 @@
 import type { Role } from "@prisma/client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 type Tab = { href: string; label: string; roles: Role[] };
 
@@ -36,17 +37,20 @@ export function Navbar({
             Ca la Paquita
           </Link>
 
-          {sessionStarted ? (
-            <form action={logoutAction}>
-              <button className="pc-btn pc-btn-secondary" type="submit" aria-live="polite">
-                Cerrar sesión
-              </button>
-            </form>
-          ) : (
-            <Link href="/acceso" className="pc-btn pc-btn-secondary hover:no-underline">
-              Inicio de sesión
-            </Link>
-          )}
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            {sessionStarted ? (
+              <form action={logoutAction}>
+                <button className="pc-btn pc-btn-secondary" type="submit" aria-live="polite">
+                  Cerrar sesión
+                </button>
+              </form>
+            ) : (
+              <Link href="/acceso" className="pc-btn pc-btn-secondary hover:no-underline">
+                Inicio de sesión
+              </Link>
+            )}
+          </div>
         </div>
 
         {!isHome && visibleTabs.length > 0 && (

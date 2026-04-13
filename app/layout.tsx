@@ -22,6 +22,7 @@ export default async function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <meta name="theme-color" content="#ffffff" />
+        <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);})();` }} />
         <script dangerouslySetInnerHTML={{ __html: `if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');` }} />
       </head>
       <body>
