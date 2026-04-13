@@ -6,7 +6,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Ca la Paquita",
-  description: "Aplicación interna de cocina y fichajes"
+  description: "Aplicación interna de cocina y fichajes",
+  manifest: "/manifest.json"
 };
 
 export default async function RootLayout({
@@ -18,6 +19,11 @@ export default async function RootLayout({
 
   return (
     <html lang="es">
+      <head>
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <meta name="theme-color" content="#ffffff" />
+        <script dangerouslySetInnerHTML={{ __html: `if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');` }} />
+      </head>
       <body>
         <div className="pc-watermark" aria-hidden="true" />
         <div className="pc-page">
