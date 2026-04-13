@@ -3,7 +3,7 @@ import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { canAccess, getSessionUser } from "@/lib/auth";
 import { formatUserName } from "@/lib/ui";
-import { startOfMadridDay } from "@/lib/dates";
+import { startOfMadridDay, monthValue } from "@/lib/dates";
 import { cancelAttendanceAction, createUserAction, updateMyIntolerancesAction } from "./actions";
 import { AdminUserManager } from "./admin-user-manager";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
@@ -32,8 +32,11 @@ export default async function UsuariosPage({
   const puedeGestionarUsuarios = canAccess(sessionUser.role, [Role.ADMIN, Role.HR]);
 
   const hoy = startOfMadridDay(new Date());
+  const [year, month] = monthValue(new Date()).split("-").map(Number);
+  const mesDesde = new Date(Date.UTC(year, month - 1, 1));
+  const mesHasta = new Date(Date.UTC(year, month, 1));
 
-  const [users, fichajesHoy, allergens, yo, fichajePropio] = await Promise.all([
+  const [users, fichajesHoy, allergens, yo, fichajePropio, misFichajesMes] = await Promise.all([
     prisma.user
       .findMany({
         orderBy: { fullName: "asc" },
@@ -82,9 +85,16 @@ export default async function UsuariosPage({
     prisma.attendanceLog
       .findUnique({
         where: { userId_attendedDate_service: { userId: sessionUser.id, attendedDate: hoy, service: "lunch" } },
-        select: { id: true }
+        select: { id: true, attendedAt: true }
       })
-      .catch(() => null)
+      .catch(() => null),
+    prisma.attendanceLog
+      .findMany({
+        where: { userId: sessionUser.id, attendedDate: { gte: mesDesde, lt: mesHasta } },
+        select: { attendedAt: true, attendedDate: true },
+        orderBy: { attendedDate: "desc" }
+      })
+      .catch(() => [])
   ]);
 
   const misAlergenos = yo?.intolerances.filter((i) => i.allergen.code !== "OTROS").map((i) => i.allergenId) ?? [];
@@ -171,15 +181,60 @@ export default async function UsuariosPage({
             </div>
           </form>
 
-          {fichajePropio && (
-            <div className="flex justify-center">
-              <form action={cancelAttendanceAction}>
-                <button type="submit" className="pc-btn pc-btn-secondary">
-                  Cancelar mi comida de hoy
-                </button>
-              </form>
-            </div>
-          )}
+          <div className={`pc-card max-w-2xl mx-auto p-4 text-center ${fichajePropio ? "border-green-300 bg-green-50" : "border-slate-200 bg-slate-50"}`}>
+            {fichajePropio ? (
+              <>
+                <p className="font-semibold text-green-800">Hoy estás apuntado al comedor</p>
+                <p className="text-sm text-green-700 mt-1">
+                  Fichaje a las{" "}
+                  {new Date(fichajePropio.attendedAt).toLocaleTimeString("es-ES", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    timeZone: "Europe/Madrid"
+                  })}
+                </p>
+                <form action={cancelAttendanceAction} className="mt-3">
+                  <button type="submit" className="pc-btn pc-btn-secondary text-sm">
+                    Cancelar mi comida de hoy
+                  </button>
+                </form>
+              </>
+            ) : (
+              <p className="text-slate-600">Hoy no estás apuntado al comedor.</p>
+            )}
+          </div>
+
+          <div className="pc-card max-w-2xl mx-auto p-4 text-left space-y-2">
+            <h2 className="font-semibold text-slate-800 text-center">Mis fichajes este mes</h2>
+            {misFichajesMes.length === 0 ? (
+              <p className="text-sm text-slate-500 text-center">Ningún fichaje este mes.</p>
+            ) : (
+              <>
+                <p className="text-xs text-slate-500 text-center">{misFichajesMes.length} día{misFichajesMes.length !== 1 ? "s" : ""} este mes</p>
+                <ul className="divide-y divide-dashed divide-slate-200">
+                  {misFichajesMes.map((f, i) => (
+                    <li key={i} className="flex justify-between py-1.5 text-sm text-slate-700">
+                      <span>
+                        {new Date(f.attendedDate).toLocaleDateString("es-ES", {
+                          weekday: "short",
+                          day: "numeric",
+                          month: "short",
+                          timeZone: "UTC"
+                        })}
+                      </span>
+                      <span className="text-slate-500">
+                        {new Date(f.attendedAt).toLocaleTimeString("es-ES", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          timeZone: "Europe/Madrid"
+                        })}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
 
           {puedeGestionarUsuarios && <h2 className="text-xl font-semibold text-slate-800 text-center">Panel admin</h2>}
 
