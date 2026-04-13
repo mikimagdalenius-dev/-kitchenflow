@@ -42,6 +42,22 @@ export function formatDateOnlyEs(date: Date) {
   }).format(date);
 }
 
+export function madridTimeToUtc(dateStr: string, timeStr: string): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const [h, min] = timeStr.split(":").map(Number);
+  const approxUtc = new Date(Date.UTC(y, m - 1, d, h, min, 0));
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: MADRID_TZ,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).formatToParts(approxUtc);
+  const madridH = Number(parts.find((p) => p.type === "hour")?.value ?? h);
+  const madridMin = Number(parts.find((p) => p.type === "minute")?.value ?? min);
+  const diffMs = ((madridH * 60 + madridMin) - (h * 60 + min)) * 60 * 1000;
+  return new Date(approxUtc.getTime() - diffMs);
+}
+
 export function currentWeekRange(): { currentWeekStart: Date; nextWeekStart: Date } {
   const today = startOfMadridDay(new Date());
   const dayOfWeek = today.getUTCDay(); // 0=domingo, 1=lunes...

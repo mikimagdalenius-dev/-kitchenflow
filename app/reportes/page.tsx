@@ -8,6 +8,8 @@ import { StatCard } from "@/components/ui/stat-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AttendanceChart } from "@/components/ui/attendance-chart";
 import { formatDateTimeEs, monthValue, parseDateInput, startOfMadridDay } from "@/lib/dates";
+import { deleteAttendanceLogAction, addManualAttendanceAction } from "./actions";
+import { DeleteFichajeButton } from "./delete-fichaje-button";
 
 export const dynamic = "force-dynamic";
 
@@ -176,6 +178,36 @@ export default async function ReportesPage({
         </div>
       )}
 
+      {sessionUser.role === Role.ADMIN && (
+        <form action={addManualAttendanceAction} className="pc-card p-4 space-y-3">
+          <h2 className="text-base font-semibold text-slate-800 text-center">Registrar fichaje manual</h2>
+          <input type="hidden" name="month" value={selected} />
+          <div className="grid gap-3 md:grid-cols-3">
+            <label className="text-sm text-slate-600">
+              Empleado
+              <select name="userId" required className="pc-select mt-1">
+                <option value="">Selecciona...</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>{u.fullName}</option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm text-slate-600">
+              Fecha
+              <input type="date" name="date" required className="pc-select mt-1"
+                defaultValue={new Date().toISOString().slice(0, 10)} />
+            </label>
+            <label className="text-sm text-slate-600">
+              Hora (Madrid)
+              <input type="time" name="time" className="pc-select mt-1" defaultValue="09:00" />
+            </label>
+          </div>
+          <div className="flex justify-center">
+            <button type="submit" className="pc-btn">Guardar fichaje</button>
+          </div>
+        </form>
+      )}
+
       <div className="pc-card p-4 text-left space-y-3">
         <h2 className="text-lg font-semibold text-slate-800 text-center">Últimos fichajes</h2>
 
@@ -214,6 +246,7 @@ export default async function ReportesPage({
                   <tr className="text-slate-500 text-xs uppercase tracking-wide">
                     <th className="text-left px-2">Fecha y hora</th>
                     <th className="text-left px-2">Empleado</th>
+                    {sessionUser.role === Role.ADMIN && <th className="px-2" />}
                   </tr>
                 </thead>
                 <tbody>
@@ -221,6 +254,15 @@ export default async function ReportesPage({
                     <tr key={log.id} className="bg-white border border-slate-200">
                       <td className="px-2 py-2">{formatDateTimeEs(new Date(log.attendedAt))}</td>
                       <td className="px-2 py-2 font-medium text-slate-800">{log.user.fullName}</td>
+                      {sessionUser.role === Role.ADMIN && (
+                        <td className="px-2 py-2 text-right">
+                          <form action={deleteAttendanceLogAction}>
+                            <input type="hidden" name="id" value={log.id} />
+                            <input type="hidden" name="month" value={selected} />
+                            <DeleteFichajeButton />
+                          </form>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
