@@ -24,10 +24,12 @@ type AllergenItem = {
 export function AdminUserManager({
   users,
   currentUserId,
+  currentUserRole,
   allergens
 }: {
   users: UserItem[];
   currentUserId: number;
+  currentUserRole: UserItem["role"];
   allergens: AllergenItem[];
 }) {
   const [selectedId, setSelectedId] = useState<number>(0);
@@ -115,7 +117,7 @@ export function AdminUserManager({
           {!selectedUser && <option value="EMPLOYEE">Rol</option>}
           <option value="EMPLOYEE">Empleado</option>
           <option value="COOK">Cocinero</option>
-          <option value="ADMIN">Administrador</option>
+          {currentUserRole === "ADMIN" && <option value="ADMIN">Administrador</option>}
           <option value="HR">RRHH</option>
           <option value="KIOSK">fichajes_iPad</option>
         </select>

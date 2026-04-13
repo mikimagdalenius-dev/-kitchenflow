@@ -87,7 +87,7 @@ export default async function ReportesPage({
       .then((rows) => rows.length)
       .catch(() => 0),
     prisma.$queryRaw<Array<{ hour: number; count: bigint }>>`
-      SELECT EXTRACT(HOUR FROM "attendedAt" AT TIME ZONE 'Europe/Madrid')::int AS hour,
+      SELECT EXTRACT(HOUR FROM ("attendedAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Europe/Madrid')::int AS hour,
              COUNT(*)::bigint AS count
       FROM "AttendanceLog"
       WHERE "attendedDate" >= ${from} AND "attendedDate" < ${to}

@@ -29,7 +29,7 @@ export default async function UsuariosPage({
   }
 
   const soloTablaFichajes = sessionUser.role === Role.COOK;
-  const puedeGestionarUsuarios = canAccess(sessionUser.role, [Role.ADMIN]);
+  const puedeGestionarUsuarios = canAccess(sessionUser.role, [Role.ADMIN, Role.HR]);
 
   const hoy = startOfMadridDay(new Date());
 
@@ -192,7 +192,7 @@ export default async function UsuariosPage({
                 <select name="role" className="pc-select" defaultValue="EMPLOYEE">
                   <option value="EMPLOYEE">Empleado</option>
                   <option value="COOK">Cocinero</option>
-                  <option value="ADMIN">Administrador</option>
+                  {sessionUser.role === Role.ADMIN && <option value="ADMIN">Administrador</option>}
                   <option value="HR">RRHH</option>
                   <option value="KIOSK">fichajes_iPad</option>
                 </select>
@@ -227,6 +227,7 @@ export default async function UsuariosPage({
                   factorialId: u.factorialId
                 }))}
                 currentUserId={sessionUser.id}
+                currentUserRole={sessionUser.role}
                 allergens={allergens}
               />
             )}

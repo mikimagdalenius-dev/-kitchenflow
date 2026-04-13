@@ -28,7 +28,6 @@ export default async function RootLayout({
             </div>
           )}
           <main className="pc-shell">{children}</main>
-          <div className="pc-credit">by miki.ls</div>
         </div>
       </body>
     </html>

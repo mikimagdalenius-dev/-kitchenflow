@@ -67,7 +67,7 @@ export async function updateMyIntolerancesAction(formData: FormData) {
 }
 
 export async function createUserAction(formData: FormData) {
-  const sessionUser = await requireRole([Role.ADMIN]);
+  const sessionUser = await requireRole([Role.ADMIN, Role.HR]);
 
   const fullName = normalizeName(formData.get("fullName"));
   const email = normalizeOptionalEmail(formData.get("email"));
@@ -84,7 +84,8 @@ export async function createUserAction(formData: FormData) {
     redirect("/usuarios?user=error-validacion");
   }
 
-  const role = Object.values(Role).includes(roleRaw as Role) ? (roleRaw as Role) : Role.EMPLOYEE;
+  let role = Object.values(Role).includes(roleRaw as Role) ? (roleRaw as Role) : Role.EMPLOYEE;
+  if (sessionUser.role === Role.HR && role === Role.ADMIN) role = Role.EMPLOYEE;
 
   try {
     const created = await prisma.user.create({
@@ -153,7 +154,7 @@ export async function logAttendanceAction(formData: FormData) {
 }
 
 export async function updateUserAction(formData: FormData) {
-  const sessionUser = await requireRole([Role.ADMIN]);
+  const sessionUser = await requireRole([Role.ADMIN, Role.HR]);
 
   const userId = parsePositiveInt(formData.get("userId"));
   const fullName = normalizeName(formData.get("fullName"));
@@ -171,7 +172,8 @@ export async function updateUserAction(formData: FormData) {
     redirect("/usuarios?user=error-validacion");
   }
 
-  const role = Object.values(Role).includes(roleRaw as Role) ? (roleRaw as Role) : Role.EMPLOYEE;
+  let role = Object.values(Role).includes(roleRaw as Role) ? (roleRaw as Role) : Role.EMPLOYEE;
+  if (sessionUser.role === Role.HR && role === Role.ADMIN) role = Role.EMPLOYEE;
 
   try {
     await prisma.$transaction([
@@ -218,7 +220,7 @@ export async function updateUserAction(formData: FormData) {
 }
 
 export async function deleteUserAction(formData: FormData) {
-  const sessionUser = await requireRole([Role.ADMIN]);
+  const sessionUser = await requireRole([Role.ADMIN, Role.HR]);
   const userId = parsePositiveInt(formData.get("userId"));
 
   if (!userId) {
