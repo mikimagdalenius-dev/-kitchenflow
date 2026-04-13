@@ -32,7 +32,7 @@ export default async function CocinaPage() {
 
   const excelPlatosUrl = process.env.NEXT_PUBLIC_DISHES_EXCEL_URL?.trim();
 
-  const [weeks, dishes, headcount] = await Promise.all([
+  const [weeks, dishes, headcount, fichajesHoyAlergias] = await Promise.all([
     prisma.menuWeek
       .findMany({
         where: {
@@ -53,19 +53,67 @@ export default async function CocinaPage() {
     prisma.dish.findMany({ orderBy: { name: "asc" }, take: 150 }).catch(() => []),
     prisma.attendanceLog
       .count({ where: { attendedDate: startOfMadridDay(new Date()), service: "lunch" } })
-      .catch(() => 0)
+      .catch(() => 0),
+    prisma.attendanceLog
+      .findMany({
+        where: { attendedDate: startOfMadridDay(new Date()), service: "lunch" },
+        select: {
+          user: {
+            select: {
+              intolerances: {
+                select: {
+                  notes: true,
+                  allergen: { select: { name: true, code: true } }
+                }
+              }
+            }
+          }
+        }
+      })
+      .catch(() => [])
   ]);
+
+  // Agrupar alergias: excluir OTROS (texto libre) y contar por nombre de alérgeno
+  const alergenoCount = new Map<string, number>();
+  const textosLibres: string[] = [];
+  for (const f of fichajesHoyAlergias) {
+    for (const intol of f.user.intolerances) {
+      if (intol.allergen.code === "OTROS") {
+        if (intol.notes?.trim()) textosLibres.push(intol.notes.trim());
+      } else {
+        alergenoCount.set(intol.allergen.name, (alergenoCount.get(intol.allergen.name) ?? 0) + 1);
+      }
+    }
+  }
+  const alergenosOrdenados = [...alergenoCount.entries()].sort((a, b) => b[1] - a[1]);
 
   return (
     <section className="page-stack">
       <PageHeader title="Cocina" subtitle="Gestión semanal de platos y menús." />
 
-      <div className="flex justify-center">
-        <div className="pc-card px-6 py-3 text-center">
+      <div className="pc-card px-6 py-4 text-center max-w-lg mx-auto space-y-3">
+        <div>
           <p className="text-sm text-slate-500">Hoy en el comedor</p>
           <p className="text-3xl font-bold text-slate-800">{headcount}</p>
           <p className="text-xs text-slate-400">personas fichadas</p>
         </div>
+        {(alergenosOrdenados.length > 0 || textosLibres.length > 0) && (
+          <div className="border-t border-dashed border-slate-200 pt-3 text-sm text-left space-y-1">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide text-center">Alergias / intolerancias hoy</p>
+            {alergenosOrdenados.map(([nombre, count]) => (
+              <div key={nombre} className="flex justify-between text-slate-700">
+                <span>{nombre}</span>
+                <span className="font-semibold">{count}</span>
+              </div>
+            ))}
+            {textosLibres.map((t, i) => (
+              <div key={i} className="text-slate-500 text-xs italic">{t}</div>
+            ))}
+          </div>
+        )}
+        {headcount > 0 && alergenosOrdenados.length === 0 && textosLibres.length === 0 && (
+          <p className="text-xs text-slate-400 border-t border-dashed border-slate-200 pt-3">Sin alergias registradas hoy</p>
+        )}
       </div>
 
       {puedeEditar && (
