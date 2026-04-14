@@ -352,6 +352,7 @@ a {
   border: 1px solid #cbd5e1;
   border-radius: 10px;
   background: #fff;
+  color: #1e293b;
   padding: 10px 12px;
   font-size: 15px;
   transition: background 0.16s ease, border-color 0.16s ease, transform 0.12s ease;
@@ -365,6 +366,25 @@ a {
 
 .acceso-suggestion span {
   color: #64748b;
+}
+
+[data-theme="dark"] .acceso-suggestions {
+  background: transparent;
+}
+
+[data-theme="dark"] .acceso-suggestion {
+  background: #2d2210;
+  border-color: #4a3820;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .acceso-suggestion:hover {
+  background: #3d2f18;
+  border-color: #d97706;
+}
+
+[data-theme="dark"] .acceso-suggestion span {
+  color: #94a3b8;
 }
 
 table tbody tr {
