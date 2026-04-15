@@ -134,12 +134,12 @@ a {
 }
 
 .pc-empty {
-  border: 1px dashed #c8d7ef;
-  background: #f8fbff;
+  border: 1px dashed #fed7aa;
+  background: #fffdf7;
   border-radius: 14px;
   padding: 14px;
   text-align: center;
-  color: #5b6b84;
+  color: #78716c;
   font-size: 14px;
 }
 
@@ -168,6 +168,7 @@ a {
 .pc-card:hover {
   border-color: #fbbf7a;
   box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+  transform: translateY(-2px);
 }
 
 .pc-stagger > *:nth-child(1) { animation-delay: 0ms; }
@@ -178,17 +179,6 @@ a {
 .pc-stagger > *:nth-child(6) { animation-delay: 275ms; }
 .pc-stagger > *:nth-child(7) { animation-delay: 330ms; }
 .pc-stagger > *:nth-child(8) { animation-delay: 385ms; }
-
-.uf-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-}
-
-.uf-card {
-  width: min(100%, 280px);
-}
 
 .users-self-card {
   border-radius: 18px;
@@ -227,13 +217,18 @@ a {
 }
 
 .pc-select:hover {
-  border-color: #9fb6d6;
+  border-color: #fbbf7a;
 }
 
 .pc-select:focus {
   outline: none;
   border-color: #d97706;
   box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.18);
+}
+
+.pc-select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .pc-btn {
@@ -275,7 +270,7 @@ a {
 }
 
 .pc-btn-secondary:hover {
-  background: #d9e4f6;
+  background: #fde8c8;
 }
 
 .hero {
@@ -296,7 +291,7 @@ a {
   width: min(390px, 84vw);
   height: auto;
   border-radius: 16px;
-  border: 1px solid #dbe5f3;
+  border: 1px solid #fed7aa;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
 }
 
@@ -318,6 +313,12 @@ a {
   margin-top: 10px;
   font-size: 16px;
   padding: 12px 18px;
+  background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%);
+  box-shadow: 0 8px 16px rgba(22, 163, 74, 0.3);
+}
+
+.hero-btn:hover {
+  box-shadow: 0 10px 20px rgba(22, 163, 74, 0.35);
 }
 
 .acceso-wrap {
@@ -403,13 +404,8 @@ table tbody tr:nth-child(8) { animation-delay: 210ms; }
 table tbody tr:nth-child(9) { animation-delay: 240ms; }
 table tbody tr:nth-child(10) { animation-delay: 270ms; }
 
-table tbody tr:hover {
+table:not(.border-separate) tbody tr:hover {
   background: #f8fafc;
-}
-
-.pc-loading {
-  display: grid;
-  gap: 12px;
 }
 
 .pc-toast {
@@ -453,8 +449,8 @@ table tbody tr:hover {
 .pc-skeleton {
   height: 94px;
   border-radius: 14px;
-  border: 1px solid #dbe4f0;
-  background: linear-gradient(90deg, #f0f4fb 25%, #e2ebf8 50%, #f0f4fb 75%);
+  border: 1px solid #fed7aa;
+  background: linear-gradient(90deg, #fef3e2 25%, #fde8c8 50%, #fef3e2 75%);
   background-size: 300% 100%;
   animation: shimmer 1.4s ease-in-out infinite;
 }
@@ -625,8 +621,8 @@ body:has(.kiosk-page) .pc-shell {
 .kiosk-confirm-ok .kiosk-confirm-name { color: #166534; }
 .kiosk-confirm-ok .kiosk-confirm-msg  { color: #15803d; }
 
-.kiosk-confirm-dup .kiosk-confirm-name { color: #1e3a8a; }
-.kiosk-confirm-dup .kiosk-confirm-msg  { color: #1e40af; }
+.kiosk-confirm-dup .kiosk-confirm-name { color: #92400e; }
+.kiosk-confirm-dup .kiosk-confirm-msg  { color: #b45309; }
 
 /* ── DARK MODE ─────────────────────────────────────────── */
 [data-theme="dark"] {
@@ -732,10 +728,16 @@ body:has(.kiosk-page) .pc-shell {
 [data-theme="dark"] .text-slate-700   { color: #cbd5e1; }
 [data-theme="dark"] .text-slate-600   { color: #94a3b8; }
 [data-theme="dark"] .text-slate-500   { color: #64748b; }
-[data-theme="dark"] .text-slate-400   { color: #475569; }
+[data-theme="dark"] .text-slate-400   { color: #64748b; }
 [data-theme="dark"] .text-green-800   { color: #86efac; }
 [data-theme="dark"] .text-green-700   { color: #4ade80; }
-[data-theme="dark"] table tbody tr:hover { background: #2d2210; }
+[data-theme="dark"] .text-amber-700   { color: #f59e0b; }
+[data-theme="dark"] .bg-amber-50      { background-color: #2d2210; }
+[data-theme="dark"] .border-amber-200 { border-color: #6b4c22; }
+[data-theme="dark"] .border-green-300 { border-color: #166534; }
+[data-theme="dark"] .divide-slate-200 > * + * { border-color: #3d2f18; }
+[data-theme="dark"] .pc-empty { background: #1e1812; border-color: #3d2f18; color: #64748b; }
+[data-theme="dark"] table:not(.border-separate) tbody tr:hover { background: #2d2210; }
 
 .theme-toggle {
   background: none;
